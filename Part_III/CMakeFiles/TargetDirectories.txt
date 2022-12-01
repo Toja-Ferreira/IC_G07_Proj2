@@ -1,4 +1,0 @@
-/home/luis/Desktop/IC_G07_Proj2/Part_III/CMakeFiles/rebuild_cache.dir
-/home/luis/Desktop/IC_G07_Proj2/Part_III/CMakeFiles/edit_cache.dir
-/home/luis/Desktop/IC_G07_Proj2/Part_III/CMakeFiles/testEncoding.dir
-/home/luis/Desktop/IC_G07_Proj2/Part_III/CMakeFiles/audioCodec.dir

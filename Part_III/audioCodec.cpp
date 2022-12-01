@@ -174,7 +174,7 @@ void audioCodec::decompress(const char *inFile)
         }
         binToDecode.closeFile();
 
-        // Decode data using Golomb decoding  
+        // Decode data using Golomb decoding
         Golomb golombCodec;
         golombCodec.setM(optimizedM);
 
@@ -204,57 +204,72 @@ void audioCodec::decompress(const char *inFile)
 
 vector<short> audioCodec::predictor(vector<short> samples, int order, char isLossy, int cutBits)
 {
-    vector<short> residuals;
     vector<short> leftChannel, rightChannel;
-    vector<short> xnl, xnr;
+    vector<short> estimateLeft, estimateRight;
+    vector<short> residuals;
 
+    // Divide samples into respective channels to perform inter-channel prediction
     for(int i = 0; i < samples.size()-1; i+=2)
     {
         leftChannel.push_back(samples[i]);
         rightChannel.push_back(samples[i+1]);
     }
 
-    if(order == 1) {
-        for(int i = 0; i < leftChannel.size(); i++) {
-            if(i == 0) {
-                xnl.push_back(0);
-                xnr.push_back(0);
+    // Perform prediction according to order
+    if(order == 1)
+    {
+        for(int i = 0; i < leftChannel.size(); i++)
+        {
+            if(i == 0)
+            {
+                estimateLeft.push_back(0);
+                estimateRight.push_back(0);
             }
-            else {
-                xnl.push_back(leftChannel[i-1]);
-                xnr.push_back(rightChannel[i-1]);
+            else
+            {
+                estimateLeft.push_back(leftChannel[i-1]);
+                estimateRight.push_back(rightChannel[i-1]);
             }
-            residuals.push_back(leftChannel[i]-xnl[i]);
-            residuals.push_back(rightChannel[i]-xnr[i]);
+            residuals.push_back(leftChannel[i] - estimateLeft[i]);    // Residual for left channel
+            residuals.push_back(rightChannel[i] - estimateRight[i]);  // Residual for right channel
         }
     }
 
-    else if(order == 2) {
-        for(int i = 0; i < leftChannel.size(); i++) {
-            if(i == 0 || i == 1) {
-                xnl.push_back(0);
-                xnr.push_back(0);
+    else if(order == 2)
+    {
+        for(int i = 0; i < leftChannel.size(); i++)
+        {
+            if(i < 2) 
+            {
+                estimateLeft.push_back(0);
+                estimateRight.push_back(0);
             }
-            else {
-                xnl.push_back(2*leftChannel[i-1] - leftChannel[i-2]);
-                xnr.push_back(2*rightChannel[i-1] - rightChannel[i-2]);
+            else 
+            {
+                estimateLeft.push_back(2*leftChannel[i-1] - leftChannel[i-2]);
+                estimateRight.push_back(2*rightChannel[i-1] - rightChannel[i-2]);
             }
-            residuals.push_back(leftChannel[i]-xnl[i]);
-            residuals.push_back(rightChannel[i]-xnr[i]);
+            residuals.push_back(leftChannel[i] - estimateLeft[i]);    // Residual for left channel
+            residuals.push_back(rightChannel[i] - estimateRight[i]);  // Residual for right channel
         }
     }
-    else {
-        for(int i = 0; i < leftChannel.size(); i++) {
-            if(i == 0 || i == 1 || i == 2) {
-                xnl.push_back(0);
-                xnr.push_back(0);
+
+    else 
+    {
+        for(int i = 0; i < leftChannel.size(); i++) 
+        {
+            if(i < 3) 
+            {
+                estimateLeft.push_back(0);
+                estimateRight.push_back(0);
             }
-            else {
-                xnl.push_back(3*leftChannel[i-1] - 3*leftChannel[i-2] + leftChannel[i-3]);
-                xnr.push_back(3*rightChannel[i-1] - 3*rightChannel[i-2] + rightChannel[i-3]);
+            else 
+            {
+                estimateLeft.push_back(3*leftChannel[i-1] - 3*leftChannel[i-2] + leftChannel[i-3]);
+                estimateRight.push_back(3*rightChannel[i-1] - 3*rightChannel[i-2] + rightChannel[i-3]);
             }
-            residuals.push_back(leftChannel[i]-xnl[i]);
-            residuals.push_back(rightChannel[i]-xnr[i]);
+            residuals.push_back(leftChannel[i] - estimateLeft[i]);    // Residual for left channel
+            residuals.push_back(rightChannel[i] - estimateRight[i]);  // Residual for right channel
         }
     }
     
@@ -277,7 +292,7 @@ vector<short> audioCodec::predictor(vector<short> samples, int order, char isLos
             short tmp = res << cutBits;
             residualsQuant.insert(residualsQuant.end(), tmp);
         }
-        
+
         return residualsQuant;
     }
 };
@@ -285,8 +300,7 @@ vector<short> audioCodec::predictor(vector<short> samples, int order, char isLos
 
 vector<short> audioCodec::revertPredictor(vector<short> residuals, int order, char isLossy, int cutBits)
 {
-    vector<short> estimates = {};
-    vector<short> samples = {};
+    vector<short> estimates, samples;
     
     // Calculate estimates and reconstruct residuals according to predictor order value
     if(order == 1) 

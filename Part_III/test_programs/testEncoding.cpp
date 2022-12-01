@@ -14,8 +14,8 @@ int main(int argc, char *argv[])
 
 
     cout << "\n------------------------------------------Testing lossy compression---------------------------------------\n";
-    codec.compress("sample01.wav", "coded_lossy_01_c", 1, '1', 3);
-    codec.compress("sample01.wav", "coded_lossy_01_c", 2, '1', 6);
+    codec.compress("sample01.wav", "coded_lossy_01_a", 1, '1', 3);
+    codec.compress("sample01.wav", "coded_lossy_01_b", 2, '1', 6);
     codec.compress("sample01.wav", "coded_lossy_01_c", 3, '1', 9);
 
 }

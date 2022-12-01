@@ -1,37 +1,41 @@
 #include "Golomb.hpp"
-#include <stdio.h>
 #include <math.h>
-#include <string>
 #include <iostream>
 
 using namespace std;
 
-Golomb::Golomb(string value, char modeIn, int mvalue){
+Golomb::Golomb(){};
 
-    if (modeIn != 'e' && modeIn != 'd'){
+Golomb::Golomb(string value, char modeIn, int mValue)
+{
+    if (modeIn != 'e' && modeIn != 'd')
+    {
         throw invalid_argument("ERROR! usage: <value to encode/decode> <e' | 'd'> <value of m>");
     }
-
-    else if(!isInteger(value) && !isValidString(value)){
+    
+    else if(!Golomb::isInteger(value) && !Golomb::isValidString(value))
+    {
         throw invalid_argument("ERROR! Please input a valid integer/bit string \nUsage: <value to encode/decode> <e' | 'd'> <value of m>");
     }
 
-    else{
-        m = mvalue;
+    else
+    {
+        m = mValue;
         if (modeIn == 'e')
         {   
             string encoded = encode(stoi(value));
             cout << "Encoded Value: " << encoded << endl;
         }
-        else{
+        else
+        {
             int decoded = decode(value);
             cout << "Decoded Value: " << decoded << endl;
         }
     }
 };
 
-string Golomb::encode(int n){
-
+string Golomb::encode(int n)
+{
     // Since n can be negative, transform every value into a unique positive integer
     int i = Golomb::transformInteger(n);
 
@@ -51,7 +55,6 @@ string Golomb::encode(int n){
 
         return unPart + binPart;
     }
-
     else
     {
         int value;
@@ -75,8 +78,8 @@ string Golomb::encode(int n){
     }
 };
 
-int Golomb::decode(string stringOfBits){
-    
+int Golomb::decode(string stringOfBits)
+{
     // Calculate parameter values
     int b = ceil(log2(m));
     int s = stringOfBits.substr(0, stringOfBits.find("0")).length();
@@ -92,11 +95,17 @@ int Golomb::decode(string stringOfBits){
     }
     else
     {
-        x = x*x*2 + Golomb::binaryToInt(stringOfBits.substr(stringOfBits.find("0")+1+b-1, 1));
+        x = x*x*2 + Golomb::binaryToInt(stringOfBits.substr(stringOfBits.find("0")+b, 1));
         s = s*m + (x-(pow(2, b) - m));
         
         // Revert unique positive integer into the original integer value (negative or positive)
-        return Golomb::revertInteger(s);;
+        return Golomb::revertInteger(s);
     }
-
 };
+
+void Golomb::setM(int mValue)
+{
+    this->m = mValue;
+};
+
+

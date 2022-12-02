@@ -12,3 +12,6 @@ target_link_libraries(audioCodec sndfile)
 
 add_executable (testEncoding ./test_programs/testEncoding.cpp)
 target_link_libraries (testEncoding sndfile)
+
+add_executable (testDecoding ./test_programs/testDecoding.cpp)
+target_link_libraries (testDecoding sndfile)

@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named testDecoding
+
+# Build rule for target.
+testDecoding: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 testDecoding
+.PHONY : testDecoding
+
+# fast build rule for target.
+testDecoding/fast:
+	$(MAKE) -f CMakeFiles/testDecoding.dir/build.make CMakeFiles/testDecoding.dir/build
+.PHONY : testDecoding/fast
+
+#=============================================================================
 # Target rules for targets named testEncoding
 
 # Build rule for target.
@@ -163,6 +176,33 @@ audioCodec.cpp.s:
 	$(MAKE) -f CMakeFiles/audioCodec.dir/build.make CMakeFiles/audioCodec.dir/audioCodec.cpp.s
 .PHONY : audioCodec.cpp.s
 
+test_programs/testDecoding.o: test_programs/testDecoding.cpp.o
+
+.PHONY : test_programs/testDecoding.o
+
+# target to build an object file
+test_programs/testDecoding.cpp.o:
+	$(MAKE) -f CMakeFiles/testDecoding.dir/build.make CMakeFiles/testDecoding.dir/test_programs/testDecoding.cpp.o
+.PHONY : test_programs/testDecoding.cpp.o
+
+test_programs/testDecoding.i: test_programs/testDecoding.cpp.i
+
+.PHONY : test_programs/testDecoding.i
+
+# target to preprocess a source file
+test_programs/testDecoding.cpp.i:
+	$(MAKE) -f CMakeFiles/testDecoding.dir/build.make CMakeFiles/testDecoding.dir/test_programs/testDecoding.cpp.i
+.PHONY : test_programs/testDecoding.cpp.i
+
+test_programs/testDecoding.s: test_programs/testDecoding.cpp.s
+
+.PHONY : test_programs/testDecoding.s
+
+# target to generate assembly for a file
+test_programs/testDecoding.cpp.s:
+	$(MAKE) -f CMakeFiles/testDecoding.dir/build.make CMakeFiles/testDecoding.dir/test_programs/testDecoding.cpp.s
+.PHONY : test_programs/testDecoding.cpp.s
+
 test_programs/testEncoding.o: test_programs/testEncoding.cpp.o
 
 .PHONY : test_programs/testEncoding.o
@@ -198,11 +238,15 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... testDecoding"
 	@echo "... testEncoding"
 	@echo "... audioCodec"
 	@echo "... audioCodec.o"
 	@echo "... audioCodec.i"
 	@echo "... audioCodec.s"
+	@echo "... test_programs/testDecoding.o"
+	@echo "... test_programs/testDecoding.i"
+	@echo "... test_programs/testDecoding.s"
 	@echo "... test_programs/testEncoding.o"
 	@echo "... test_programs/testEncoding.i"
 	@echo "... test_programs/testEncoding.s"

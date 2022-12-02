@@ -24,13 +24,13 @@ class audioCodec
 
         /**
          * The codec revertPredictor, to reconstruct the values obtained from the predictor
-         * @param residuals vector containing all the residuals to reconstruct
+         * @param samples vector containing all the residuals to reconstruct
          * @param order order of the predictor (1-3) 
          * @param isLossy '0' if lossless | '1' if lossy 
          * @param cutBits number of bits (0-15) that were quantized
          * @return vector containing the reconstructed sequence
         */        
-        vector<short> revertPredictor(vector<short> residuals, int order, char isLossy, int cutBits);
+        vector<short> revertPredictor(vector<short> samples, int order, char isLossy, int cutBits);
 
         /**
          * Auxiliary function to convert an integer value into binary with specified number of bits
@@ -82,6 +82,7 @@ class audioCodec
         float calculateEntropy(vector<short> values);
 
     public:
+    
         /**
          * Initialize audioCodec object
         */
@@ -100,8 +101,9 @@ class audioCodec
         /**
          * Decompress binary file into audio file
          * @param inFile name of binary file that contains the compressed audio data
+         * @param outFile name of audio file to be created
         */
-        void decompress(const char *inFile);
+        void decompress(const char *inFile, const char *outFile);
 };
 
 #endif

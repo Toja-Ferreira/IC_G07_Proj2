@@ -81,6 +81,14 @@ class audioCodec
         */
         float calculateEntropy(vector<short> values);
 
+        /**
+         * Auxiliary function to calculate compression ratio value between 2 files
+         * @param uncompressedFile uncompressed file
+         * @param compressedFile compressed file
+         * @return compression ratio 
+        */
+        float calculateCompression(const char *uncompressedFile, const char *compressedFile);
+
     public:
     
         /**
@@ -93,10 +101,10 @@ class audioCodec
          * @param inFile name of audio file to compress
          * @param outfFile name of output binary file containing compressed audio data
          * @param predOrder order of predictor (1-3)
-         * @param isLossy '0' for lossless compression (default) | '1' for lossy compression
+         * @param isLossy 0 for lossless compression (default) | 1 for lossy compression
          * @param cutBits number of bits (0-15) to be quantized (default=0)
         */
-        void compress(const char *inFile, const char *outFile, int predOrder, char isLossy='0', int cutBits=0);
+        void compress(const char *inFile, const char *outFile, int predOrder, int isLossy=0, int cutBits=0);
 
         /**
          * Decompress binary file into audio file

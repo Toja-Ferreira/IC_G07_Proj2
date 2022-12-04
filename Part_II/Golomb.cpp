@@ -88,7 +88,7 @@ int Golomb::decode(string stringOfBits)
     // Choose method according to value of x
     if(x < pow(2, b) - m)
     {
-        s = s * m + x;
+        s = s*m + x;
 
         // Revert unique positive integer into the original integer value (negative or positive)
         return Golomb::revertInteger(s);

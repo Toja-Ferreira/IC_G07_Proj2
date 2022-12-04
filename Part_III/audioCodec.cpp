@@ -8,12 +8,14 @@
 #include <ctime>
 #include <map>
 #include <numeric>
+#include <filesystem>
+#include <sys/stat.h>
 
 using namespace std;
 
 audioCodec::audioCodec(){};
 
-void audioCodec::compress(const char *inFile, const char *outFile, int predOrder, char isLossy, int cutBits)
+void audioCodec::compress(const char *inFile, const char *outFile, int predOrder, int isLossy, int cutBits)
 {
     clock_t begin = clock(); // Start of compression
 
@@ -34,19 +36,24 @@ void audioCodec::compress(const char *inFile, const char *outFile, int predOrder
         throw invalid_argument("ERROR! audio file is not in PCM_16 format\n");
     }
 
-    if (isLossy != '0' && isLossy != '1')
+    if (isLossy != 0 && isLossy != 1)
     {
-        throw invalid_argument("ERROR! isLossy field can only be 0 (lossless) or 1 (lossy)");
+        throw invalid_argument("ERROR! Compression can only be 0 (lossless) or 1 (lossy)\n");
     }
 
     if (predOrder > 3 || predOrder < 1)
     {
-        throw invalid_argument("ERROR! predOrder field must be 1, 2 or 3");
+        throw invalid_argument("ERROR! Predictor order can only be 1, 2 or 3\n");
     }
 
     if (cutBits > 15 || cutBits < 0)
     {
-        throw invalid_argument("ERROR! cutBits field must be a positive integer lesser than 16");
+        throw invalid_argument("ERROR! Bits to cut must be an integer in the interval [0-15]\n");
+    }
+
+    if (isLossy == 0 && cutBits != 0)
+    {
+        throw invalid_argument("ERROR! Cannot cut any bits if compression is lossless!\n");
     }
 
     else
@@ -111,17 +118,14 @@ void audioCodec::compress(const char *inFile, const char *outFile, int predOrder
 
             cout << "The audio file: " << inFile << " has been sucessfully compressed into the binary file " << outFile << endl;
 
-            float originalEntropy = audioCodec::calculateEntropy(samples);
-            float residualEntropy = audioCodec::calculateEntropy(sequence);
-
             cout << "-Type of Compression: " << (isLossy == '1' ? "Lossy" : "Lossless")
-                 << "\n-Quantized Bits: " << (isLossy == '0' ? 0 : cutBits)
-                 << "\n-Predictor Order: " << predOrder
-                 << "\n-Original Entropy: " << originalEntropy
-                 << "\n-Residual Entropy: " << residualEntropy
-                 << "\n-Entropy Ratio: " << originalEntropy / residualEntropy
-                 << "\n-Time Taken: " << (double(end - begin) / CLOCKS_PER_SEC) << "s\n\n"
-                 << endl;
+                << "\n-Quantized Bits: " << (isLossy == '0' ? 0 : cutBits)
+                << "\n-Predictor Order: " << predOrder
+                << "\n-Original Entropy: " << audioCodec::calculateEntropy(samples)
+                << "\n-Residual Entropy: " << audioCodec::calculateEntropy(sequence)
+                << "\n-Compression Ratio: " << audioCodec::calculateCompression(inFile, outFile)
+                << "\n-Time Taken: " << (double(end - begin) / CLOCKS_PER_SEC) << "s\n\n"
+                << endl;
         }
         catch (exception const &e)
         {
@@ -158,7 +162,6 @@ void audioCodec::decompress(const char *inFile, const char *outFile)
 
         // Decode file data using Golomb decoding algorithm
         Golomb golombCodec;
-        golombCodec.setM(optimizedM);
         vector<short> samples;
         int b = ceil(log2(optimizedM));
 
@@ -170,29 +173,28 @@ void audioCodec::decompress(const char *inFile, const char *outFile)
             vector<int> vectorOfBits;
 
             // Find unary part (consecutive number of 1s until first 0 is found)
-            while(true)
+            while (true)
             {
-                if(binToDecode.readBit() == 0)
+                if (binToDecode.readBit() == 0)
                 {
                     break;
                 }
                 s++;
             }
 
-            vectorOfBits = binToDecode.readNBits(b-1);
+            vectorOfBits = binToDecode.readNBits(b - 1);
             x = audioCodec::binaryToInt(vectorOfBits);
-            
+
             // Calculate value according to value of x
-            if(x < (pow(2, b) - optimizedM))
+            if (x < (pow(2, b) - optimizedM))
             {
-                samples.push_back(golombCodec.revertInteger(s*optimizedM + x));
+                samples.push_back(golombCodec.revertInteger(s * optimizedM + x));
             }
             else
             {
-                x = x*x*2 + binToDecode.readBit();
-                samples.push_back(golombCodec.revertInteger(s*optimizedM - (x - (pow(2, b) - optimizedM))));
+                x = x * x * 2 + binToDecode.readBit();
+                samples.push_back(golombCodec.revertInteger(s * optimizedM - (x - (pow(2, b) - optimizedM))));
             }
-                                                                                                                                                  
         }
         binToDecode.closeFile();
 
@@ -202,7 +204,8 @@ void audioCodec::decompress(const char *inFile, const char *outFile)
         // Write values into audio file
         SndfileHandle sfhOut{outFile, SFM_WRITE, hFormat, hChannels, hSampleRate};
         sfhOut.writef(sequence.data(), hFrames);
-        cout << "The binary file " << inFile << " has been sucessfully decompressed into the audio file " << outFile << "\n" << endl;
+        cout << "The binary file " << inFile << " has been sucessfully decompressed into the audio file " << outFile << "\n"
+             << endl;
     }
     catch (exception const &e)
     {
@@ -254,8 +257,8 @@ vector<short> audioCodec::predictor(vector<short> samples, int order, char isLos
             }
             else
             {
-                estimateLeft.push_back(2 * leftChannel[i - 1] - leftChannel[i - 2]);
-                estimateRight.push_back(2 * rightChannel[i - 1] - rightChannel[i - 2]);
+                estimateLeft.push_back(2*leftChannel[i - 1] - leftChannel[i - 2]);
+                estimateRight.push_back(2*rightChannel[i - 1] - rightChannel[i - 2]);
             }
             residuals.push_back(leftChannel[i] - estimateLeft[i]);   // Residual for left channel
             residuals.push_back(rightChannel[i] - estimateRight[i]); // Residual for right channel
@@ -273,8 +276,8 @@ vector<short> audioCodec::predictor(vector<short> samples, int order, char isLos
             }
             else
             {
-                estimateLeft.push_back(3 * leftChannel[i - 1] - 3 * leftChannel[i - 2] + leftChannel[i - 3]);
-                estimateRight.push_back(3 * rightChannel[i - 1] - 3 * rightChannel[i - 2] + rightChannel[i - 3]);
+                estimateLeft.push_back(3*leftChannel[i - 1] - 3*leftChannel[i - 2] + leftChannel[i - 3]);
+                estimateRight.push_back(3*rightChannel[i - 1] - 3*rightChannel[i - 2] + rightChannel[i - 3]);
             }
             residuals.push_back(leftChannel[i] - estimateLeft[i]);   // Residual for left channel
             residuals.push_back(rightChannel[i] - estimateRight[i]); // Residual for right channel
@@ -290,18 +293,13 @@ vector<short> audioCodec::predictor(vector<short> samples, int order, char isLos
     // If prediction is lossy ('1'), perform quantization on residuals and return
     else
     {
-        vector<short> residualsQuant;
-        residualsQuant.resize(0);
-
         // Perform quantization on residuals
-        for (auto res : residuals)
-        {
-            res = res >> cutBits;
-            short tmp = res << cutBits;
-            residualsQuant.insert(residualsQuant.end(), tmp);
+        size_t i {};
+        for(auto &s: residuals){
+            residuals[i++] = s >> cutBits;
         }
 
-        return residualsQuant;
+        return residuals;
     }
 };
 
@@ -311,34 +309,30 @@ vector<short> audioCodec::revertPredictor(vector<short> samples, int order, char
     vector<short> estimateLeft, estimateRight;
     vector<short> originalValues;
 
-    // Divide samples into respective channels to revert the prediction made on each channel
+    // Divide samples into respective channels to perform inter-channel prediction
     for (int i = 0; i < samples.size() - 1; i += 2)
     {
         leftChannel.push_back(samples[i]);
         rightChannel.push_back(samples[i + 1]);
     }
 
-    // Revert prediction according to order
-    if (order == 1)
+    // Perform prediction according to order
+    if(order == 1)
     {
         for (int i = 0; i < leftChannel.size(); i++)
         {
             if (i == 0)
             {
-                estimateLeft.push_back(leftChannel[0]);
-                estimateRight.push_back(rightChannel[0]);
-
-                originalValues.push_back(leftChannel[0]);
-                originalValues.push_back(rightChannel[0]);
+                estimateLeft.push_back(leftChannel[i]);
+                estimateRight.push_back(rightChannel[i]);
             }
             else
             {
-                estimateLeft.push_back((short)leftChannel[i] + estimateLeft[i - 1]);
-                estimateRight.push_back((short)rightChannel[i] + estimateRight[i - 1]);
-
-                originalValues.push_back(estimateLeft[i]);
-                originalValues.push_back(estimateRight[i]);
+                estimateLeft.push_back(leftChannel[i] - leftChannel[i - 1]);
+                estimateRight.push_back(rightChannel[i] - rightChannel[i - 1]);
             }
+            originalValues.push_back(leftChannel[i] + estimateLeft[i]);   // Original value for left channel
+            originalValues.push_back(rightChannel[i] + estimateRight[i]); // Original value for right channel
         }
     }
 
@@ -348,20 +342,16 @@ vector<short> audioCodec::revertPredictor(vector<short> samples, int order, char
         {
             if (i < 2)
             {
-                estimateLeft.push_back(0);
-                estimateRight.push_back(0);
-
-                originalValues.push_back(estimateLeft[i]);
-                originalValues.push_back(estimateRight[i]);
+                estimateLeft.push_back(leftChannel[i]);
+                estimateRight.push_back(rightChannel[i]);
             }
             else
             {
-                estimateLeft.push_back((short)leftChannel[i] + (2 * estimateLeft[i - 1] - estimateLeft[i - 2]));
-                estimateRight.push_back((short)rightChannel[i] + (2 * estimateRight[i - 1] - estimateRight[i - 2]));
-
-                originalValues.push_back(estimateLeft[i]);
-                originalValues.push_back(estimateRight[i]);
+                estimateLeft.push_back(leftChannel[i] - 2*leftChannel[i - 1] - leftChannel[i - 2]);
+                estimateRight.push_back(rightChannel[i] - 2*rightChannel[i - 1] - rightChannel[i - 2]);
             }
+            originalValues.push_back(leftChannel[i] + estimateLeft[i]);   // Original value for left channel
+            originalValues.push_back(rightChannel[i] + estimateRight[i]); // Original value for right channel
         }
     }
 
@@ -371,24 +361,36 @@ vector<short> audioCodec::revertPredictor(vector<short> samples, int order, char
         {
             if (i < 3)
             {
-                estimateLeft.push_back(0);
-                estimateRight.push_back(0);
-
-                originalValues.push_back(estimateLeft[i]);
-                originalValues.push_back(estimateRight[i]);
+                estimateLeft.push_back(leftChannel[i]);
+                estimateRight.push_back(rightChannel[i]);
             }
             else
             {
-                estimateLeft.push_back((short)leftChannel[i] + (3 * estimateLeft[i - 1] - 3 * estimateLeft[i - 2] + estimateLeft[i - 3]));
-                estimateRight.push_back((short)rightChannel[i] + (3 * estimateRight[i - 1] - 3 * estimateRight[i - 2] + estimateRight[i - 3]));
-
-                originalValues.push_back(estimateLeft[i]);
-                originalValues.push_back(estimateRight[i]);
+                estimateLeft.push_back(leftChannel[i] - 3*leftChannel[i - 1] - 3*leftChannel[i - 2] - leftChannel[i - 3]);
+                estimateRight.push_back(rightChannel[i] - 3*rightChannel[i - 1] - 3*rightChannel[i - 2] - rightChannel[i - 3]);
             }
+            originalValues.push_back(leftChannel[i] + estimateLeft[i]);   // Original value for left channel
+            originalValues.push_back(rightChannel[i] + estimateRight[i]); // Original value for right channel
         }
     }
+    
+    // If prediction is lossless ('0'), return original values
+    if (isLossy == '0')
+    {
+        return originalValues;
+    }
 
-    return originalValues;
+    // If prediction is lossy ('1'), revert quantization
+    else
+    {
+        // Perform quantization on residuals
+        size_t i {};
+        for(auto &s: originalValues){
+            originalValues[i++] = s << cutBits;
+        }
+
+        return originalValues;
+    }
 };
 
 float audioCodec::calculateEntropy(vector<short> values)
@@ -414,4 +416,19 @@ float audioCodec::calculateEntropy(vector<short> values)
     }
 
     return entropy;
+};
+
+float audioCodec::calculateCompression(const char *uncompressedFile, const char *compressedFile)
+{   
+    string filenameU = uncompressedFile;
+    struct stat stat_bufU;
+    int sizeU = stat(filenameU.c_str(), &stat_bufU);
+    sizeU = sizeU == 0 ? stat_bufU.st_size : -1;
+
+    string filenameC = compressedFile;
+    struct stat stat_bufC;
+    int sizeC = stat(filenameC.c_str(), &stat_bufC);
+    sizeC = sizeC == 0 ? stat_bufC.st_size : -1;
+
+    return (float) sizeU/sizeC;
 };

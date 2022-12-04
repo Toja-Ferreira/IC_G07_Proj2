@@ -12,38 +12,6 @@ class Golomb {
         int m; // Value of integer parameter m in Golomb Code
 
         /**
-         * Auxiliary function to check if given integer m is a power of two
-         * @param m integer to check
-         * @return True if m is a power of two, otherwise False
-        */
-        bool isPowerOfTwo(int m)
-        {
-            if (m == 0)
-            {
-                return false;
-            }
-            return (ceil(log2(m)) == floor(log2(m)));
-        }
-
-        /**
-         * Auxiliary function to check if given string is valid integer
-         * @param s string to validate
-         * @return True if s is valid integer, otherwise False
-        */ 
-        bool isInteger(const string &s)
-        {
-            if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+')))
-            {
-                return false;
-            } 
-
-            char * p;
-            strtol(s.c_str(), &p, 10);
-
-            return (*p == 0);
-        }
-
-        /**
          * Auxiliary function to check if given string is a valid encoded value
          * @param s string to validate
          * @return True if s is a valid encoded value, otherwise False
@@ -153,7 +121,7 @@ class Golomb {
         string encode(int n);
 
         /**
-         * Perform Golomb Decoding
+         * Perform Golomb Decoding on single string
          * @param stringOfBits string of bits to be decoded
          * @return decoded integer
         */
@@ -199,6 +167,39 @@ class Golomb {
                 return (-1)*ceil(n/2)-1;
             }
         };
+
+        /**
+         * Auxiliary function to check if given integer m is a power of two
+         * @param m integer to check
+         * @return True if m is a power of two, otherwise False
+        */
+        bool isPowerOfTwo(int m)
+        {
+            if (m == 0)
+            {
+                return false;
+            }
+            return (ceil(log2(m)) == floor(log2(m)));
+        }
+
+
+        /**
+         * Auxiliary function to check if given string is valid integer
+         * @param s string to validate
+         * @return True if s is valid integer, otherwise False
+        */ 
+        bool isInteger(const string &s)
+        {
+            if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+')))
+            {
+                return false;
+            } 
+
+            char * p;
+            strtol(s.c_str(), &p, 10);
+
+            return (*p == 0);
+        }
 };
 
 #endif

@@ -32,7 +32,7 @@ int main(){
     cout << "--------------------------";
 
     cout << "\nEncoded String: 111001 \n";
-    cout << "m: 7 \n";
+    cout << "m: 5 \n";
     Golomb golombDecode2("111001", 'd', 5);
 
     cout << "--------------------------";

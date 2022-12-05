@@ -118,8 +118,8 @@ void audioCodec::compress(const char *inFile, const char *outFile, int predOrder
 
             cout << "The audio file: " << inFile << " has been sucessfully compressed into the binary file " << outFile << endl;
 
-            cout << "-Type of Compression: " << (isLossy == '1' ? "Lossy" : "Lossless")
-                << "\n-Quantized Bits: " << (isLossy == '0' ? 0 : cutBits)
+            cout << "-Type of Compression: " << (isLossy == 1 ? "Lossy" : "Lossless")
+                << "\n-Quantized Bits: " << (isLossy == 0 ? 0 : cutBits)
                 << "\n-Predictor Order: " << predOrder
                 << "\n-Original Entropy: " << audioCodec::calculateEntropy(samples)
                 << "\n-Residual Entropy: " << audioCodec::calculateEntropy(sequence)

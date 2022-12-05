@@ -1,0 +1,3 @@
+/home/guilherme/IC/IC_G07_Proj2/Parte_IV/build/CMakeFiles/test_image_codec.dir
+/home/guilherme/IC/IC_G07_Proj2/Parte_IV/build/CMakeFiles/edit_cache.dir
+/home/guilherme/IC/IC_G07_Proj2/Parte_IV/build/CMakeFiles/rebuild_cache.dir
